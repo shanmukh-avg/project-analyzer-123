@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Analyzer</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"
+            defer></script>
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">Project<span>Analyzer</span></div>
+        <a href="#analyzer" class="nav-link">Analyze Project</a>
+    </header>
+    <nav class="project-tabs">
+    <button class="tab-link active"
+            onclick="showTab('details', this)">
+        Project Details
+    </button>
+
+    <button class="tab-link"
+            onclick="showTab('documentation', this)">
+        Documentation
+    </button>
+
+    <button class="tab-link"
+            onclick="showTab('source', this)">
+        Source Code
+    </button>
+</nav>
+    <nav class="project-tabs">
+  <button class="tab active"
+          onclick="showSection('details', this)">
+    Project Details
+  </button>
+
+  <button class="tab"
+          onclick="showSection('documentation', this)">
+    Documentation
+  </button>
+
+  <button class="tab"
+          onclick="showSection('source', this)">
+    Source Code
+  </button>
+</nav>
+
+<section id="details" class="tab-content">
+  <h2>Project Details</h2>
+  <p>Enter your project information here.</p>
+</section>
+
+<section id="documentation"
+         class="tab-content" hidden>
+  <h2>Documentation</h2>
+  <p>Your project documentation will appear here.</p>
+</section>
+
+<section id="source" class="tab-content" hidden>
+  <h2>Source Code</h2>
+  <p>Your project source code will appear here.</p>
+</section>
+
+<script>
+function showSection(id, button) {
+  document.querySelectorAll(".tab-content").forEach(section => {
+    section.hidden = true;
+  });
+
+  document.getElementById(id).hidden = false;
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.classList.remove("active");
+  });
+
+  button.classList.add("active");
+}
+</script>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">STUDENT PROJECT TOOLKIT</p>
+            <h1>Understand your project.<br>
+                <span>Improve your code.</span>
+            </h1>
+            <p>Analyze project requirements and inspect basic Python
+               code statistics from one dashboard.</p>
+        </section>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="notice">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="panel" id="analyzer">
+            <h2>Analyze a Project</h2>
+            <p class="muted">Enter your project information below.</p>
+
+            <form method="POST" id="projectForm">
+                <label for="title">Project Title *</label>
+                <input id="title" name="title" type="text"
+                       maxlength="150" required
+                       placeholder="e.g. Student Management System">
+
+                <label for="description">Project Description</label>
+                <textarea id="description" name="description"
+                          rows="4" maxlength="10000"
+                          placeholder="Describe the problem and solution..."></textarea>
+
+                <label for="technology">Technologies</label>
+                <input id="technology" name="technology" type="text"
+                       placeholder="Python, Flask, SQLite">
+
+                <label for="code">Python Source Code (optional)</label>
+                <textarea id="code" name="code" rows="10"
+                          maxlength="100000" spellcheck="false"
+                          placeholder="Paste Python code here..."></textarea>
+
+                <div class="form-footer">
+                    <span class="muted">Maximum code size: 100,000 characters</span>
+                    <button type="submit">Analyze Now →</button>
+                </div>
+            </form>
+        </section>
+
+        {% if project %}
+        <section class="results">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">ANALYSIS RESULTS</p>
+                    <h2>{{ project.title }}</h2>
+                </div>
+                <span class="badge">{{ project.difficulty }}</span>
+            </div>
+
+            <p>{{ project.description or "No description provided." }}</p>
+            <p><strong>Technologies:</strong> {{ project.technology }}</p>
+            <p><strong>Description word count:</strong>
+                {{ project.word_count }}</p>
+            <p class="muted">{{ project.reason }}</p>
+
+            <h3>Suggested Objectives</h3>
+            <ul>
+                {% for objective in project.objectives %}
+                    <li>{{ objective }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+        {% if code_result %}
+        <section class="panel">
+            <p class="eyebrow">PYTHON CODE REVIEW</p>
+            <h2>{{ code_result.status }}</h2>
+
+            {% if code_result.syntax_error %}
+                <div class="notice">
+                    {{ code_result.syntax_error }}
+                </div>
+            {% endif %}
+
+            <div class="stats">
+                <div class="stat">
+                    <span>Lines</span>
+                    <strong>{{ code_result.total_lines }}</strong>
+                </div>
+                <div class="stat">
+                    <span>Functions</span>
+                    <strong>{{ code_result.functions }}</strong>
+                </div>
+                <div class="stat">
+                    <span>Classes</span>
+                    <strong>{{ code_result.classes }}</strong>
+                </div>
+                <div class="stat">
+                    <span>Imports</span>
+                    <strong>{{ code_result.imports }}</strong>
+                </div>
+            </div>
+
+            <h3>Suggestions</h3>
+            <ul>
+                {% for suggestion in code_result.suggestions %}
+                    <li>{{ suggestion }}</li>
+                {% endfor %}
+            </ul>
+            <p class="muted">
+                This is a basic static check, not a complete security
+                review or guarantee that code will run correctly.
+            </p>
+        </section>
+        {% endif %}
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">RECENT ACTIVITY</p>
+                    <h2>Analysis History</h2>
+                </div>
+                <span class="badge">{{ history|length }} records</span>
+            </div>
+
+            {% if history %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Difficulty</th>
+                                <th>Code Status</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.title }}</strong>
+                                    <small>{{ item.created_at }}</small>
+                                </td>
+                                <td>{{ item.difficulty }}</td>
+                                <td>{{ item.code_status }}</td>
+                                <td>
+                                    <a class="report-link"
+                                       href="{{ url_for('download_report',
+                                                        analysis_id=item.id) }}">
+                                        Download
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="muted">Your analyses will appear here.</p>
+            {% endif %}
+        </section>
+
+        <footer>
+            Diploma CME Project · Project Analyzer
+        </footer>
+        <section id="documentation" class="tab-panel" hidden>
+    <h2>Project Documentation</h2>
+    <p>
+        Project Analyzer helps students check their project
+        information, requirements, and completeness.
+    </p>
+
+    <h3>Key Features</h3>
+    <ul>
+        <li>Project information analysis</li>
+        <li>Project completeness checking</li>
+        <li>Documentation support</li>
+        <li>Source code reference</li>
+    </ul>
+
+    <h3>Technologies Used</h3>
+    <p>HTML, CSS, JavaScript, Python, Flask and SQLite.</p>
+</section>
+
+<section id="source" class="tab-panel" hidden>
+    <h2>Source Code</h2>
+    <p>
+        The source code is maintained in your Project Analyzer
+        project files.
+    </p>
+
+    <ul>
+        <li>app.py — Python Flask backend</li>
+        <li>templates/index.html — Website structure</li>
+        <li>static/style.css — Website styling</li>
+        <li>static/script.js — Frontend JavaScript</li>
+    </ul>
+    <p>
+        Open these files in VS Code to view the source code.
+    </p>
+</section>
+    </main>
+    <script>
+function showTab(tabName, button) {
+    // Hide the extra panels
+    document.querySelectorAll(".tab-panel").forEach(panel => {
+        panel.hidden = true;
+    });
+
+    // Hide the existing project details content
+    document.querySelectorAll(".hero, #analyzer, .notice")
+        .forEach(element => {
+            element.hidden = true;
+        });
+
+    // Show the selected tab
+    if (tabName === "details") {
+        document.querySelectorAll(".hero, #analyzer, .notice")
+            .forEach(element => {
+                element.hidden = false;
+            });
+    } else {
+        document.getElementById(tabName).hidden = false;
+    }
+
+    // Highlight the selected button
+    document.querySelectorAll(".tab-link").forEach(tab => {
+        tab.classList.remove("active");
+    });
+
+    button.classList.add("active");
+}
+</script>
+</body>
+</html>
